@@ -1,4 +1,4 @@
-name: CI Pipeline with SonarQube
+name: Windows SonarQube Setup
 
 on:
   push:
@@ -6,58 +6,29 @@ on:
       - feature/**  # Runs on any feature branch
 
 jobs:
-  build:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]  # Runs on both Windows & Linux
-
-    runs-on: ${{ matrix.os }}
+  sonar_scan:
+    runs-on: windows-latest  # Run on Windows
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set Up Java 17 (Linux)
-        if: runner.os == 'Linux'
+      - name: Set Up Java 17
         uses: actions/setup-java@v3
         with:
           distribution: 'adopt'
           java-version: '17'
 
-      - name: Set Up Java 17 (Windows)
-        if: runner.os == 'Windows'
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'adopt'
-          java-version: '17'
-
-      - name: Install SonarScanner (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
-          unzip sonar-scanner-cli-5.0.1.3006-linux.zip
-          echo "$(pwd)/sonar-scanner-5.0.1.3006-linux/bin" >> $GITHUB_PATH
-
-      - name: Install SonarScanner (Windows)
-        if: runner.os == 'Windows'
+      - name: Install SonarScanner on Windows
         run: |
           Invoke-WebRequest -Uri "https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-windows.zip" -OutFile "sonar.zip"
           Expand-Archive -Path "sonar.zip" -DestinationPath "C:\sonar-scanner"
           echo "C:\sonar-scanner\sonar-scanner-5.0.1.3006-windows\bin" | Out-File -Append -Encoding ascii $env:GITHUB_PATH
 
-      - name: Run SonarQube Scan (Linux)
-        if: runner.os == 'Linux'
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          sonar-scanner \
-            -Dsonar.projectKey=zomato-1 \
-            -Dsonar.projectName=ZomatoProject \
-            -Dsonar.host.url=http://localhost:9000 \
-            -Dsonar.token=$SONAR_TOKEN
+      - name: Verify SonarScanner Installation
+        run: sonar-scanner.bat -v
 
-      - name: Run SonarQube Scan (Windows)
-        if: runner.os == 'Windows'
+      - name: Run SonarQube Scan
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |

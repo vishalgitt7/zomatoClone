@@ -1,1 +1,30 @@
+name: Zomato CI - Checkout & Setup Node.js
+
+on:
+  push:
+    branches:
+      - feature-zomato  # Runs only when code is pushed to feature-zomato branch
+
+jobs:
+  setup-node:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]  # Runs only on Linux & Windows
+
+    runs-on: ${{ matrix.os }}  # Dynamically selects Linux or Windows
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4  # Clones the repository
+
+      - name: Display OS Information
+        run: echo "Running on ${{ runner.os }}"
+
+      - name: Set Up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'  # Use Node.js v20
+
+      - name: Verify Node.js & NPM Version
+        run: node -v && npm -v
 

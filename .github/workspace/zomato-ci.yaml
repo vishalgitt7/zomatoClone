@@ -1,58 +1,14 @@
-name: Windows CI Pipeline for Zomato Project
+name: Zomato CI - Checkout Code
 
 on:
   push:
     branches:
-      - feature/**  # Runs on any feature branch
+      - feature-zomato  # Runs only when code is pushed to feature-zomato branch
 
 jobs:
-  build:
-    runs-on: windows-latest  # Using Windows runner
-
-    env:
-      DOCKER_IMAGE: devopsship/zomato:latest  # Change if needed
+  checkout-code:
+    runs-on: ubuntu-latest  # Using Linux runner
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Set Up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install NPM Dependencies
-        run: npm install
-
-      - name: Install Trivy (Security Scanner)
-        run: |
-          iwr -Uri "https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.50.0_Windows-64bit.zip" -OutFile "trivy.zip"
-          Expand-Archive -Path "trivy.zip" -DestinationPath "C:\trivy"
-          Add-Content -Path $env:GITHUB_PATH -Value "C:\trivy"
-
-      - name: Run Trivy Security Scan
-        run: C:\trivy\trivy.exe fs --exit-code 0 --severity HIGH,CRITICAL --format table --output trivy-report.txt .
-
-      - name: Set Up SonarQube Scanner
-        run: |
-          Invoke-WebRequest -Uri "https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-windows.zip" -OutFile "sonar.zip"
-          Expand-Archive -Path "sonar.zip" -DestinationPath "C:\sonar-scanner"
-          Add-Content -Path $env:GITHUB_PATH -Value "C:\sonar-scanner\sonar-scanner-5.0.1.3006-windows\bin"
-
-      - name: SonarQube Analysis
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          sonar-scanner.bat ^
-            -Dsonar.projectKey=zomato ^
-            -Dsonar.projectName=zomato ^
-            -Dsonar.token=%SONAR_TOKEN%  # Removed -Dsonar.host.url (Use SonarCloud)
-
-      - name: Log in to Docker Hub
-        run: echo ${{ secrets.DOCKER_HUB_PASSWORD }} | docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
-
-      - name: Build Docker Image
-        run: docker build -t devopsship/zomato:latest .
-
-      - name: Push Docker Image to Docker Hub
-        run: docker push devopsship/zomato:latest
+      - name: Checkout Repository
+        uses: actions/checkout@v4  # Fetches the repository code

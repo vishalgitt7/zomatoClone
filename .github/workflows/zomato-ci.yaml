@@ -1,51 +1,68 @@
-name: Zomato CI - SonarQube Integration
+name: CI Pipeline with SonarQube
 
 on:
   push:
     branches:
-      - feature-zomato  # Runs only for feature-zomato branch
+      - feature/**  # Runs on any feature branch
 
 jobs:
-  sonar-analysis:
+  build:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]  # Run on Linux & Windows
+        os: [ubuntu-latest, windows-latest]  # Runs on both Windows & Linux
 
     runs-on: ${{ matrix.os }}
 
-    env:
-      SONAR_HOST_URL: "https://sonarcloud.io"  # Change to http://localhost:9000 if self-hosted
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}  # Secure token from GitHub Secrets
-
     steps:
-      - name: Checkout Repository
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Install Java (Required for Sonar Scanner)
+      - name: Set Up Java 17 (Linux)
+        if: runner.os == 'Linux'
         uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'
+          distribution: 'adopt'
           java-version: '17'
 
-      - name: Install Sonar Scanner (Linux)
+      - name: Set Up Java 17 (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'adopt'
+          java-version: '17'
+
+      - name: Install SonarScanner (Linux)
         if: runner.os == 'Linux'
         run: |
-          wget -O sonar-scanner.zip "https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip"
-          unzip sonar-scanner.zip -d $HOME/
-          echo "$HOME/sonar-scanner-5.0.1.3006-linux/bin" >> $GITHUB_PATH
+          wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
+          unzip sonar-scanner-cli-5.0.1.3006-linux.zip
+          echo "$(pwd)/sonar-scanner-5.0.1.3006-linux/bin" >> $GITHUB_PATH
 
-      - name: Install Sonar Scanner (Windows)
+      - name: Install SonarScanner (Windows)
         if: runner.os == 'Windows'
         run: |
           Invoke-WebRequest -Uri "https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-windows.zip" -OutFile "sonar.zip"
           Expand-Archive -Path "sonar.zip" -DestinationPath "C:\sonar-scanner"
           echo "C:\sonar-scanner\sonar-scanner-5.0.1.3006-windows\bin" | Out-File -Append -Encoding ascii $env:GITHUB_PATH
 
-      - name: Run SonarQube Analysis
+      - name: Run SonarQube Scan (Linux)
+        if: runner.os == 'Linux'
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           sonar-scanner \
             -Dsonar.projectKey=zomato \
             -Dsonar.projectName=ZomatoProject \
-            -Dsonar.organization=your-org-name  # Required for SonarCloud
-            -Dsonar.host.url=$SONAR_HOST_URL \
+            -Dsonar.host.url=http://localhost:9000 \
             -Dsonar.token=$SONAR_TOKEN
+
+      - name: Run SonarQube Scan (Windows)
+        if: runner.os == 'Windows'
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          sonar-scanner.bat ^
+            -Dsonar.projectKey=zomato ^
+            -Dsonar.projectName=ZomatoProject ^
+            -Dsonar.host.url=http://localhost:9000 ^
+            -Dsonar.token=%SONAR_TOKEN%

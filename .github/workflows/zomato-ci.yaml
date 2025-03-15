@@ -51,7 +51,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           sonar-scanner \
-            -Dsonar.projectKey=zomato \
+            -Dsonar.projectKey=zomato-1 \
             -Dsonar.projectName=ZomatoProject \
             -Dsonar.host.url=http://localhost:9000 \
             -Dsonar.token=$SONAR_TOKEN
@@ -62,7 +62,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           sonar-scanner.bat ^
-            -Dsonar.projectKey=zomato ^
+            -Dsonar.projectKey=zomato-1 ^
             -Dsonar.projectName=ZomatoProject ^
             -Dsonar.host.url=http://localhost:9000 ^
             -Dsonar.token=%SONAR_TOKEN%

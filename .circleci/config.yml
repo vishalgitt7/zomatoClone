@@ -42,6 +42,27 @@ jobs:
       - run:
           name: deploy
           command: '#e.g. ./deploy.sh'
+
+build-and-push-docker:
+    docker:
+      - image: cimg/base:2024.09  # Base image with Docker CLI
+    steps:
+      - checkout
+      - setup_remote_docker:  # Enables Docker commands in CircleCI
+          version: 20.10.14
+          docker_layer_caching: true  # Speeds up builds
+      - run:
+          name: Build Docker Image
+          command: |
+            docker build -t $DOCKERHUB_USERNAME/zomato_clone:latest .
+      - run:
+          name: Login to Docker Hub
+          command: |
+            echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+      - run:
+          name: Push Docker Image
+          command: |
+            docker push $DOCKERHUB_USERNAME/zomato_clone:latest
 workflows:
   build-and-test:
     jobs:

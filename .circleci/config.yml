@@ -1,8 +1,10 @@
 # This config was automatically generated from your source code
 # Stacks detected: deps:node:.
 version: 2.1
+
 orbs:
   node: circleci/node@5
+
 jobs:
   test-node:
     # Install node dependencies and run tests
@@ -14,6 +16,7 @@ jobs:
       - run:
           name: Run tests
           command: npm test -- --passWithNoTests
+
   build-node:
     # Build node project
     executor: node/default
@@ -33,17 +36,8 @@ jobs:
       - store_artifacts:
           path: ~/artifacts
           destination: node-build
-  deploy:
-    # This is an example deploy job, not actually used by the workflow
-    docker:
-      - image: cimg/base:stable
-    steps:
-      # Replace this with steps to deploy to users
-      - run:
-          name: deploy
-          command: '#e.g. ./deploy.sh'
 
-build-and-push-docker:
+  build-and-push-docker:
     docker:
       - image: cimg/base:2024.09  # Base image with Docker CLI
     steps:
@@ -63,6 +57,7 @@ build-and-push-docker:
           name: Push Docker Image
           command: |
             docker push $DOCKERHUB_USERNAME/zomato_clone:latest
+
 workflows:
   build-and-test:
     jobs:
@@ -70,6 +65,6 @@ workflows:
       - build-node:
           requires:
             - test-node
-    # - deploy:
-    #     requires:
-    #       - build-node
+      - build-and-push-docker:
+          requires:
+            - build-node  # Ensures Docker build happens after successful Node build

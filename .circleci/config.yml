@@ -63,7 +63,8 @@ jobs:
             trivy image --exit-code 0 --severity CRITICAL,MEDIUM --no-progress \
               --cache-dir ~/.cache/trivy $DOCKERHUB_USERNAME/zomato_clone:latest
       - store_artifacts:
-          path: trivy-report.json
+          path: /home/circleci/project/trivy-report.json
+          destination: trivy-report
       - run:
           name: Install Docker Scout
           command: |

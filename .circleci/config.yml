@@ -1,5 +1,4 @@
-# This config was automatically generated from your source code
-# Stacks detected: deps:node:.
+# This config integrates Trivy and Docker Scout for vulnerability scanning
 version: 2.1
 
 orbs:
@@ -49,12 +48,41 @@ jobs:
           command: |
             docker build -t $DOCKERHUB_USERNAME/zomato_clone:latest .
       - run:
-          name: Login to Docker Hub
+          name: Install Trivy
           command: |
+            # Install Trivy using the official installer script
+            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+            # Verify Trivy installation
+            trivy --version  
+      - run:
+          name: Scan Docker Image with Trivy
+          command: |
+            # Create a cache directory for Trivy to speed up scans
+            mkdir -p ~/.cache/trivy
+            # Scan the image, fail on CRITICAL or HIGH vulnerabilities
+            trivy image --exit-code 1 --severity CRITICAL,HIGH --no-progress \
+              --cache-dir ~/.cache/trivy $DOCKERHUB_USERNAME/zomato_clone:latest
+      - run:
+          name: Install Docker Scout
+          command: |
+            # Install Docker Scout CLI
+            curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh | sh -s -- -b /usr/local/bin
+            # Verify Docker Scout installation
+            docker-scout version
+      - run:
+          name: Login to Docker Hub for Scout
+          command: |
+            # Log in to Docker Hub to allow Scout to analyze the image
             echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+      - run:
+          name: Scan Docker Image with Docker Scout
+          command: |
+            # Scan the image, fail on CRITICAL or HIGH vulnerabilities
+            docker-scout cves $DOCKERHUB_USERNAME/zomato_clone:latest --exit-code --only-severity critical,high
       - run:
           name: Push Docker Image
           command: |
+            # Push only if scans pass
             docker push $DOCKERHUB_USERNAME/zomato_clone:latest
 
 workflows:

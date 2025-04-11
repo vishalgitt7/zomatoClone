@@ -80,7 +80,10 @@ jobs:
           name: Scan Docker Image with Docker Scout
           command: |
             # Scan the image, fail on CRITICAL or HIGH vulnerabilities
-            docker-scout cves $DOCKERHUB_USERNAME/zomato_clone:latest --no-exit-code --only-severity critical,medium
+            docker-scout cves $DOCKERHUB_USERNAME/zomato_clone:latest  --only-severity medium
+      - store_artifacts:
+          path: scout-report.txt
+          destination: scout-report
       - run:
           name: Push Docker Image
           command: |

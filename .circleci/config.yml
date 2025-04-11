@@ -60,11 +60,16 @@ jobs:
             # Create a cache directory for Trivy to speed up scans
             mkdir -p ~/.cache/trivy
             # Scan the image, fail on CRITICAL or HIGH vulnerabilities
-            trivy image --exit-code 0 --severity CRITICAL,MEDIUM --no-progress \
-              --cache-dir ~/.cache/trivy $DOCKERHUB_USERNAME/zomato_clone:latest
+            trivy image --severity CRITICAL,HIGH,MEDIUM,LOW \
+              --cache-dir ~/.cache/trivy --format json \
+              --output /home/circleci/project/trivy-report.json \
+              $DOCKERHUB_USERNAME/zomato_clone:latest 2> /home/circleci/project/trivy-error.log
       - store_artifacts:
           path: /home/circleci/project/trivy-report.json
           destination: trivy-report
+      - store_artifacts:
+          path: /home/circleci/project/trivy-error.log
+          destination: trivy-error
       - run:
           name: Install Docker Scout
           command: |
@@ -81,10 +86,13 @@ jobs:
           name: Scan Docker Image with Docker Scout
           command: |
             # Scan the image, fail on CRITICAL or HIGH vulnerabilities
-            docker-scout cves $DOCKERHUB_USERNAME/zomato_clone:latest  --only-severity medium
+            docker-scout cves $DOCKERHUB_USERNAME/zomato_clone:latest --only-severity medium > /home/circleci/project/scout-report.txt 2> /home/circleci/project/scout-error.log
       - store_artifacts:
-          path: scout-report.txt
+          path: /home/circleci/project/scout-report.txt
           destination: scout-report
+      - store_artifacts:
+          path: /home/circleci/project/scout-error.log
+          destination: scout-error
       - run:
           name: Push Docker Image
           command: |

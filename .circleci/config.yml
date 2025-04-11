@@ -51,7 +51,7 @@ jobs:
           name: Install Trivy
           command: |
             # Install Trivy using the official installer script
-            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
             # Verify Trivy installation
             trivy --version  
       - run:
@@ -66,7 +66,7 @@ jobs:
           name: Install Docker Scout
           command: |
             # Install Docker Scout CLI
-            curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh | sh -s -- -b /usr/local/bin
+            curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh | sudo sh -s -- -b /usr/local/bin
             # Verify Docker Scout installation
             docker-scout version
       - run:

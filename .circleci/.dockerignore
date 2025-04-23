@@ -1,0 +1,35 @@
+# Dependency directories
+node_modules/
+**/node_modules/
+
+# Build artifacts
+build/
+dist/
+.next/
+.out/
+**/*.map
+
+# Environment files
+.env
+.env.local
+.env*.local
+
+# Version control
+.git/
+.gitignore
+.github/
+.circleci/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.pid
+.DS_Store
+
+# Documentation
+*.md
+LICENSE
+
+# Editor configurations
+.vscode/
+.idea/

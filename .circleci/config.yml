@@ -1,106 +1,108 @@
-# This config integrates Trivy and Docker Scout for vulnerability scanning
 version: 2.1
 
 orbs:
-  node: circleci/node@5
+  node: circleci/node@5.0.2
+  docker: circleci/docker@3.1.1
+  slack: circleci/slack@4.12.5
 
 jobs:
   test-node:
-    # Install node dependencies and run tests
     executor: node/default
     steps:
       - checkout
       - node/install-packages:
+          cache-key: "node-modules-{{ checksum 'package-lock.json' }}-v2"
           pkg-manager: npm
       - run:
-          name: Run tests
-          command: npm test -- --passWithNoTests
+          name: Security Audit
+          command: npm audit --production --audit-level=high
+      - run:
+          name: Run Tests with Coverage
+          command: npm test -- --passWithNoTests --coverage
+      - store_test_results:
+          path: coverage
+      - store_artifacts:
+          path: coverage
+          destination: coverage-report
 
   build-node:
-    # Build node project
     executor: node/default
     steps:
       - checkout
+      - run:
+          name: Update npm
+          command: sudo npm install -g npm@latest
       - node/install-packages:
           pkg-manager: npm
+          args: --force
       - run:
+          name: Fix Vulnerabilities
+          command: npm audit fix --force || true
+      - run:
+          name: Update Dependencies
+          command: npm update --save
+      - run:
+          name: Build Project
           command: npm run build
-      - run:
-          name: Create the ~/artifacts directory if it doesn't exist
-          command: mkdir -p ~/artifacts
-      # Copy output to artifacts dir
-      - run:
-          name: Copy artifacts
-          command: cp -R build dist public .output .next .docusaurus ~/artifacts 2>/dev/null || true
-      - store_artifacts:
-          path: ~/artifacts
-          destination: node-build
-
+ 
   build-and-push-docker:
     docker:
-      - image: cimg/base:2024.09  # Base image with Docker CLI
+      - image: cimg/base:2024.09
     steps:
       - checkout
-      - setup_remote_docker:  # Enables Docker commands in CircleCI
-          docker_layer_caching: true  # Speeds up builds
+      - setup_remote_docker:
+          version: 20.10
+          docker_layer_caching: true
+      
+      # Build with security flags
       - run:
-          name: Build Docker Image
+          name: Build Secure Image
           command: |
-            docker build -t $DOCKERHUB_USERNAME/zomato_clone:latest .
+            docker build \
+              --pull \
+              --no-cache \
+              --build-arg NODE_ENV=production \
+              -t $DOCKERHUB_USERNAME/zomato_clone:latest \
+              -t $DOCKERHUB_USERNAME/zomato_clone:$CIRCLE_SHA1 .
+      
+      # Trivy Vulnerability Scan
       - run:
-          name: Install Trivy
+          name: Run Trivy Scan
           command: |
-            # Install Trivy using the official installer script
-            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
-            # Verify Trivy installation
-            trivy --version  
-      - run:
-          name: Scan Docker Image with Trivy
-          command: |
-            # Create a cache directory for Trivy to speed up scans
-            mkdir -p ~/.cache/trivy
-            # Scan the image, fail on CRITICAL or HIGH vulnerabilities
-            trivy image --severity CRITICAL,HIGH,MEDIUM,LOW \
-              --cache-dir ~/.cache/trivy --format json \
-              --output /home/circleci/project/trivy-report.json \
-              $DOCKERHUB_USERNAME/zomato_clone:latest 2> /home/circleci/project/trivy-error.log
+            trivy image \
+              --severity CRITICAL,HIGH \
+              --ignore-unfixed \
+              --exit-code 1 \
+              --cache-dir ~/.cache/trivy \
+              --format json \
+              --output trivy-scan.json \
+              $DOCKERHUB_USERNAME/zomato_clone:latest
       - store_artifacts:
-          path: /home/circleci/project/trivy-report.json
+          path: trivy-scan.json
           destination: trivy-report
+      
+      # Docker Scout Analysis
+      - run:
+          name: Run Docker Scout
+          command: |
+            docker-scout cves \
+              --exit-code \
+              --only-severity critical,high \
+              $DOCKERHUB_USERNAME/zomato_clone:latest > scout-report.txt
       - store_artifacts:
-          path: /home/circleci/project/trivy-error.log
-          destination: trivy-error
-      - run:
-          name: Install Docker Scout
-          command: |
-            # Install Docker Scout CLI
-            curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh | sudo sh -s -- -b /usr/local/bin
-            # Verify Docker Scout installation
-            docker-scout version
-      - run:
-          name: Login to Docker Hub for Scout
-          command: |
-            # Log in to Docker Hub to allow Scout to analyze the image
-            echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-      - run:
-          name: Scan Docker Image with Docker Scout
-          command: |
-            # Scan the image, fail on CRITICAL or HIGH vulnerabilities
-            docker-scout cves $DOCKERHUB_USERNAME/zomato_clone:latest --only-severity medium > /home/circleci/project/scout-report.txt 2> /home/circleci/project/scout-error.log
-      - store_artifacts:
-          path: /home/circleci/project/scout-report.txt
+          path: scout-report.txt
           destination: scout-report
-      - store_artifacts:
-          path: /home/circleci/project/scout-error.log
-          destination: scout-error
-      - run:
-          name: Push Docker Image
-          command: |
-            # Push only if scans pass
-            docker push $DOCKERHUB_USERNAME/zomato_clone:latest
+      
+      # Secure Push
+      - docker/check:
+          docker-username: $DOCKERHUB_USERNAME
+          docker-password: $DOCKERHUB_PASSWORD
+      - docker/push:
+          image: $DOCKERHUB_USERNAME/zomato_clone
+          tag: "latest,$CIRCLE_SHA1"
 
 workflows:
-  build-and-test:
+  main:
     jobs:
       - test-node
       - build-node:
@@ -108,4 +110,11 @@ workflows:
             - test-node
       - build-and-push-docker:
           requires:
-            - build-node  # Ensures Docker build happens after successful Node build
+            - build-node
+          context: docker-creds
+    jobs:
+      - test-node
+      - build-and-push-docker:
+          context: docker-creds
+          requires:
+            - test-node

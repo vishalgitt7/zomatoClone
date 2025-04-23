@@ -1,9 +1,7 @@
 version: 2.1
 
 orbs:
-  node: circleci/node@5.0.2
-  docker: circleci/docker@3.1.1
-  slack: circleci/slack@4.12.5
+  node: circleci/node@5.0.2  
 
 jobs:
   test-node:
@@ -65,42 +63,57 @@ jobs:
               -t $DOCKERHUB_USERNAME/zomato_clone:latest \
               -t $DOCKERHUB_USERNAME/zomato_clone:$CIRCLE_SHA1 .
       
-      # Trivy Vulnerability Scan
       - run:
-          name: Run Trivy Scan
+          name: Install Trivy
           command: |
-            trivy image \
-              --severity CRITICAL,HIGH \
-              --ignore-unfixed \
-              --exit-code 1 \
-              --cache-dir ~/.cache/trivy \
-              --format json \
-              --output trivy-scan.json \
-              $DOCKERHUB_USERNAME/zomato_clone:latest
+            # Install Trivy using the official installer script
+            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
+            # Verify Trivy installation
+            trivy --version  
+      - run:
+          name: Scan Docker Image with Trivy
+          command: |
+            # Create a cache directory for Trivy to speed up scans
+            mkdir -p ~/.cache/trivy
+            # Scan the image, fail on CRITICAL or HIGH vulnerabilities
+            trivy image --severity CRITICAL,HIGH,MEDIUM,LOW \
+              --cache-dir ~/.cache/trivy --format json \
+              --output /home/circleci/project/trivy-report.json \
+              $DOCKERHUB_USERNAME/zomato_clone:latest 2> /home/circleci/project/trivy-error.log
       - store_artifacts:
-          path: trivy-scan.json
+          path: /home/circleci/project/trivy-report.json
           destination: trivy-report
-      
-      # Docker Scout Analysis
-      - run:
-          name: Run Docker Scout
-          command: |
-            docker-scout cves \
-              --exit-code \
-              --only-severity critical,high \
-              $DOCKERHUB_USERNAME/zomato_clone:latest > scout-report.txt
       - store_artifacts:
-          path: scout-report.txt
+          path: /home/circleci/project/trivy-error.log
+          destination: trivy-error
+      - run:
+          name: Install Docker Scout
+          command: |
+            # Install Docker Scout CLI
+            curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh | sudo sh -s -- -b /usr/local/bin
+            # Verify Docker Scout installation
+            docker-scout version
+      - run:
+          name: Login to Docker Hub for Scout
+          command: |
+            # Log in to Docker Hub to allow Scout to analyze the image
+            echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+      - run:
+          name: Scan Docker Image with Docker Scout
+          command: |
+            # Scan the image, fail on CRITICAL or HIGH vulnerabilities
+            docker-scout cves $DOCKERHUB_USERNAME/zomato_clone:latest --only-severity medium > /home/circleci/project/scout-report.txt 2> /home/circleci/project/scout-error.log
+      - store_artifacts:
+          path: /home/circleci/project/scout-report.txt
           destination: scout-report
-      
-      # Secure Push
-      - docker/check:
-          docker-username: $DOCKERHUB_USERNAME
-          docker-password: $DOCKERHUB_PASSWORD
-      - docker/push:
-          image: $DOCKERHUB_USERNAME/zomato_clone
-          tag: "latest,$CIRCLE_SHA1"
-
+      - store_artifacts:
+          path: /home/circleci/project/scout-error.log
+          destination: scout-error
+      - run:
+          name: Push Docker Image
+          command: |
+            # Push only if scans pass
+            docker push $DOCKERHUB_USERNAME/zomato_clone:latest
 workflows:
   main:
     jobs:

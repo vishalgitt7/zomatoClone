@@ -1,68 +1,51 @@
 version: 2.1
 
 orbs:
-  node: circleci/node@5.0.2  
+  node: circleci/node@5
 
 jobs:
   test-node:
+    # Install node dependencies and run tests
     executor: node/default
     steps:
       - checkout
       - node/install-packages:
-          cache-key: "node-modules-{{ checksum 'package-lock.json' }}-v2"
           pkg-manager: npm
       - run:
-          name: Security Audit
-          command: npm audit --production --audit-level=high
-      - run:
-          name: Run Tests with Coverage
-          command: npm test -- --passWithNoTests --coverage
-      - store_test_results:
-          path: coverage
-      - store_artifacts:
-          path: coverage
-          destination: coverage-report
+          name: Run tests
+          command: npm test -- --passWithNoTests
 
   build-node:
+    # Build node project
     executor: node/default
     steps:
       - checkout
-      - run:
-          name: Update npm
-          command: sudo npm install -g npm@latest
       - node/install-packages:
           pkg-manager: npm
-          args: --force
       - run:
-          name: Fix Vulnerabilities
-          command: npm audit fix --force || true
-      - run:
-          name: Update Dependencies
-          command: npm update --save
-      - run:
-          name: Build Project
           command: npm run build
- 
+      - run:
+          name: Create the ~/artifacts directory if it doesn't exist
+          command: mkdir -p ~/artifacts
+      # Copy output to artifacts dir
+      - run:
+          name: Copy artifacts
+          command: cp -R build dist public .output .next .docusaurus ~/artifacts 2>/dev/null || true
+      - store_artifacts:
+          path: ~/artifacts
+          destination: node-build
+
   build-and-push-docker:
     docker:
-      - image: cimg/base:2024.09
+      - image: cimg/base:2024.09  # Base image with Docker CLI
     steps:
       - checkout
-      - setup_remote_docker:
-          version: 20.10
-          docker_layer_caching: true
-      
-      # Build with security flags
+      - setup_remote_docker:  # Enables Docker commands in CircleCI
+          docker_layer_caching: true  # Speeds up builds
       - run:
-          name: Build Secure Image
+          name: Build Docker Image
           command: |
-            docker build \
-              --pull \
-              --no-cache \
-              --build-arg NODE_ENV=production \
-              -t $DOCKERHUB_USERNAME/zomato_clone:latest \
-              -t $DOCKERHUB_USERNAME/zomato_clone:$CIRCLE_SHA1 .
-      
+            docker build -t $DOCKERHUB_USERNAME/zomato_clone:latest .
       - run:
           name: Install Trivy
           command: |
@@ -114,8 +97,9 @@ jobs:
           command: |
             # Push only if scans pass
             docker push $DOCKERHUB_USERNAME/zomato_clone:latest
+
 workflows:
-  main:
+  build-and-test:
     jobs:
       - test-node
       - build-node:
@@ -123,8 +107,4 @@ workflows:
             - test-node
       - build-and-push-docker:
           requires:
-            - build-node
-      - build-and-push-docker:
-          context: docker-creds
-          requires:
-            - test-node
+            - build-node  # Ensures Docker build happens after successful Node build

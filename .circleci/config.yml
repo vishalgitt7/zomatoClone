@@ -111,9 +111,6 @@ workflows:
       - build-and-push-docker:
           requires:
             - build-node
-          context: docker-creds
-    jobs:
-      - test-node
       - build-and-push-docker:
           context: docker-creds
           requires:

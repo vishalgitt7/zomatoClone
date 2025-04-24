@@ -11,7 +11,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - npm-cache-{{ checksum "package-lock.json" }}
+            - npm-cache-{{ checksum "package.json" }}-{{ checksum "package-lock.json"}}
             - npm-cache-
       - node/install-packages:
           pkg-manager: npm
@@ -28,7 +28,7 @@ jobs:
             git commit -m "[ci skip] chore: update dependencies and fix vulnerabilities" || echo "No dependency updates"
             git push origin main || echo "Push failed, likely no changes or permissions issue"
       - save_cache:
-          key: npm-cache-{{ checksum "package-lock.json" }}
+          key: npm-cache-{{ checksum "package.json" }}-{{ checksum "package-lock.json"}}
           paths:
             - ~/.npm
   test-node:
@@ -37,12 +37,12 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - npm-cache-{{ checksum "package-lock.json" }}
+            - npm-cache-{{ checksum "package.json" }}-{{ checksum "package-lock.json"}}
             - npm-cache-
       - node/install-packages:
           pkg-manager: npm
       - save_cache:
-          key: npm-cache-{{ checksum "package-lock.json" }}
+          key: npm-cache-{{ checksum "package.json" }}-{{ checksum "package-lock.json"}}
           paths:
             - ~/.npm
       - run:
@@ -54,12 +54,12 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - npm-cache-{{ checksum "package-lock.json" }}
+            - npm-cache-{{ checksum "package.json" }}-{{ checksum "package-lock.json"}}
             - npm-cache-
       - node/install-packages:
           pkg-manager: npm
       - save_cache:
-          key: npm-cache-{{ checksum "package-lock.json" }}
+          key: npm-cache-{{ checksum "package.json" }}-{{ checksum "package-lock.json"}}
           paths:
             - ~/.npm
       - run:

@@ -21,6 +21,7 @@ jobs:
             npm outdated || true
             npm update
             npm audit fix --force || echo "npm audit fix failed, continuing..."
+            npm install
             git config --global user.email "vishalgitt7@users.noreply.github.com"
             git config --global user.name "Vishal Gitt"
             git add package.json package-lock.json

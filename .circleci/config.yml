@@ -2,46 +2,84 @@ version: 2.1
 
 orbs:
   node: circleci/node@5
+  github: circleci/github-cli@2.0.0
 
 jobs:
-  test-node:
-    # Install node dependencies and run tests
+  update-dependencies:
     executor: node/default
     steps:
       - checkout
+      - restore_cache:
+          keys:
+            - npm-cache-{{ checksum "package-lock.json" }}
+            - npm-cache-
       - node/install-packages:
           pkg-manager: npm
+      - run:
+          name: Check and Update Dependencies
+          command: |
+            npm outdated
+            npm update
+            npm audit fix --force
+            git config --global user.email "ci-bot@example.com"
+            git config --global user.name "CI Bot"
+            git add package.json package-lock.json
+            git commit -m "chore: update dependencies and fix vulnerabilities" || echo "No dependency updates"
+            git push origin main || echo "No changes to push"
+      - save_cache:
+          key: npm-cache-{{ checksum "package-lock.json" }}
+          paths:
+            - ~/.npm
+  test-node:
+    executor: node/default
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - npm-cache-{{ checksum "package-lock.json" }}
+            - npm-cache-
+      - node/install-packages:
+          pkg-manager: npm
+      - save_cache:
+          key: npm-cache-{{ checksum "package-lock.json" }}
+          paths:
+            - ~/.npm
       - run:
           name: Run tests
           command: npm test -- --passWithNoTests
-
   build-node:
-    # Build node project
     executor: node/default
     steps:
       - checkout
+      - restore_cache:
+          keys:
+            - npm-cache-{{ checksum "package-lock.json" }}
+            - npm-cache-
       - node/install-packages:
           pkg-manager: npm
+      - save_cache:
+          key: npm-cache-{{ checksum "package-lock.json" }}
+          paths:
+            - ~/.npm
       - run:
+          name: Build project
           command: npm run build
       - run:
           name: Create the ~/artifacts directory if it doesn't exist
           command: mkdir -p ~/artifacts
-      # Copy output to artifacts dir
       - run:
           name: Copy artifacts
           command: cp -R build dist public .output .next .docusaurus ~/artifacts 2>/dev/null || true
       - store_artifacts:
           path: ~/artifacts
           destination: node-build
-
   build-and-push-docker:
     docker:
-      - image: cimg/base:2024.09  # Base image with Docker CLI
+      - image: cimg/base:2024.09
     steps:
       - checkout
-      - setup_remote_docker:  # Enables Docker commands in CircleCI
-          docker_layer_caching: true  # Speeds up builds
+      - setup_remote_docker:
+          docker_layer_caching: true
       - run:
           name: Build Docker Image
           command: |
@@ -49,20 +87,13 @@ jobs:
       - run:
           name: Install Trivy
           command: |
-            # Install Trivy using the official installer script
             curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
-            # Verify Trivy installation
-            trivy --version  
+            trivy --version
       - run:
           name: Scan Docker Image with Trivy
           command: |
-            # Create a cache directory for Trivy to speed up scans
             mkdir -p ~/.cache/trivy
-            # Scan the image, fail on CRITICAL or HIGH vulnerabilities
-            trivy image --severity CRITICAL,HIGH,MEDIUM,LOW \
-              --cache-dir ~/.cache/trivy --format json \
-              --output /home/circleci/project/trivy-report.json \
-              $DOCKERHUB_USERNAME/zomato_clone:latest 2> /home/circleci/project/trivy-error.log
+            trivy image --severity CRITICAL,HIGH --cache-dir ~/.cache/trivy --format json --output /home/circleci/project/trivy-report.json $DOCKERHUB_USERNAME/zomato_clone:latest 2> /home/circleci/project/trivy-error.log
       - store_artifacts:
           path: /home/circleci/project/trivy-report.json
           destination: trivy-report
@@ -72,20 +103,16 @@ jobs:
       - run:
           name: Install Docker Scout
           command: |
-            # Install Docker Scout CLI
             curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh | sudo sh -s -- -b /usr/local/bin
-            # Verify Docker Scout installation
             docker-scout version
       - run:
           name: Login to Docker Hub for Scout
           command: |
-            # Log in to Docker Hub to allow Scout to analyze the image
             echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
       - run:
           name: Scan Docker Image with Docker Scout
           command: |
-            # Scan the image, fail on CRITICAL or HIGH vulnerabilities
-            docker-scout cves $DOCKERHUB_USERNAME/zomato_clone:latest --only-severity medium > /home/circleci/project/scout-report.txt 2> /home/circleci/project/scout-error.log
+            docker-scout cves $DOCKERHUB_USERNAME/zomato_clone:latest --only-severity critical,high > /home/circleci/project/scout-report.txt 2> /home/circleci/project/scout-error.log
       - store_artifacts:
           path: /home/circleci/project/scout-report.txt
           destination: scout-report
@@ -95,16 +122,18 @@ jobs:
       - run:
           name: Push Docker Image
           command: |
-            # Push only if scans pass
             docker push $DOCKERHUB_USERNAME/zomato_clone:latest
 
 workflows:
   build-and-test:
     jobs:
-      - test-node
+      - update-dependencies
+      - test-node:
+          requires:
+            - update-dependencies
       - build-node:
           requires:
             - test-node
       - build-and-push-docker:
           requires:
-            - build-node  # Ensures Docker build happens after successful Node build
+            - build-node

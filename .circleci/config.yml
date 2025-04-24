@@ -13,8 +13,13 @@ jobs:
           keys:
             - npm-cache-{{ checksum "package.json" }}-{{ checksum "package-lock.json"}}
             - npm-cache-
-      - node/install-packages:
-          pkg-manager: npm
+      - run:
+          name: Install Dependencies
+          command: |
+            if ! npm ci; then
+              echo "npm ci failed, likely due to package-lock.json being out of sync. Running npm install..."
+              npm install
+            fi
       - run:
           name: Check and Update Dependencies
           command: |

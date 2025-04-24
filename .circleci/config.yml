@@ -13,6 +13,7 @@ jobs:
           keys:
             - npm-cache-{{ checksum "package.json" }}-{{ checksum "package-lock.json"}}
             - npm-cache-
+            - npm install
       - node/install-packages:
           pkg-manager: npm
       - run:

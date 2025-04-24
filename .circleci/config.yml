@@ -54,7 +54,6 @@ jobs:
       - restore_cache:
           keys:
             - npm-cache-{{ checksum "package-lock.json" }}
-           }
             - npm-cache-
       - node/install-packages:
           pkg-manager: npm

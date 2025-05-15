@@ -1,0 +1,46 @@
+name: Weekly Dependency Update
+
+on:
+  schedule:
+    - cron: '0 0 * * 0' # Every Sunday at midnight UTC
+  workflow_dispatch:
+
+jobs:
+  update-dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: |
+          if ! npm ci; then
+            echo "npm ci failed, running npm install"
+            npm install
+          fi
+
+      - name: Update and Audit Fix
+        run: |
+          npm outdated || true
+          npm update
+          npm audit fix --force || echo "Audit fix failed"
+          npm install
+
+      - name: Configure Git
+        run: |
+          git config --global user.email "vishalgitt7@users.noreply.github.com"
+          git config --global user.name "Vishal Gitt"
+
+      - name: Commit and Push
+        run: |
+          git add package.json package-lock.json
+          git commit -m "[ci skip] chore: update dependencies and fix vulnerabilities" || echo "No changes to commit"
+          git push origin main || echo "Push failed (maybe no permissions or no changes)"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

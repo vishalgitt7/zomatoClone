@@ -1,5 +1,4 @@
-# Stage 1: Build
-FROM node:20-slim AS builder
+FROM node:20-slim 
 WORKDIR /app
 COPY . .
 EXPOSE 3000

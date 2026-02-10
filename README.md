@@ -1,68 +1,180 @@
-# 🚀 **DevOps Project: ZOMATO Clone App Deployment**
+# DevOps Project: Zomato Clone App Deployment
 
-In this **DevOps project**, I demonstrate how to **deploy a ZOMATO Clone App** using a variety of modern DevOps tools and services.
-
-## 🛠️ Tools & Services Used:
-
-1. **GitHub** ![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat-square&logo=github&logoColor=white)
-2. **Jenkins** ![Jenkins](https://img.shields.io/badge/Jenkins-D24939?style=flat-square&logo=jenkins&logoColor=white)
-3. **SonarQube** ![SonarQube](https://img.shields.io/badge/SonarQube-4E9BCD?style=flat-square&logo=sonarqube&logoColor=white)
-4. **Docker** ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white)
-5. **Kubernetes** ![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?style=flat-square&logo=kubernetes&logoColor=white)
-6. **Prometheus** ![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=flat-square&logo=prometheus&logoColor=white)
-7. **Grafana** ![Grafana](https://img.shields.io/badge/Grafana-F46800?style=flat-square&logo=grafana&logoColor=white)
-8. **ArgoCD** ![ArgoCD](https://img.shields.io/badge/ArgoCD-EF7B4D?style=flat-square&logo=argo&logoColor=white)
-9. **OWASP** ![OWASP](https://img.shields.io/badge/OWASP-000000?style=flat-square&logo=owasp&logoColor=white)
-10. **Trivy** ![Trivy](https://img.shields.io/badge/Trivy-00979D?style=flat-square&logo=trivy&logoColor=white)
+A hands-on **DevOps deployment project** showcasing how to build, containerize, test, and deploy the **Zomato Clone App** using modern DevOps tools and workflows such as **GitHub Actions, Docker, Kubernetes, Monitoring, CI/CD, and Security Scanning**. 
 
 ---
 
-### Project Stages:
+## 🚀 Features
 
-1. **Stage 1** - Deployment of App to Docker Container
-2. **Stage 2** - Deployment of App to K8S Cluster with Monitoring
-
----
-
-### 📂 GitHub Repo Link:  
-[**ZOMATO Clone DevOps Project**](#)
-
-### 📹 DevOps Project Video Link:  
-[![YouTube](https://img.shields.io/badge/YouTube-FF0000?style=flat-square&logo=youtube&logoColor=white)](https://youtu.be/GyoI6-I68aQ)
-
-### 📺 Docker Playlist Video Link:  
-[![YouTube](https://img.shields.io/badge/YouTube-FF0000?style=flat-square&logo=youtube&logoColor=white)](https://www.youtube.com/playlist?list=PLs-PsDpuAuTeNx3OgGQ1QrpNBo-XE6VBh)
+✔ Full CI/CD pipeline using **GitHub Actions**
+✔ Containerization with **Docker**
+✔ Kubernetes deployment in a cluster
+✔ Security scanning (Trivy, OWASP)
+✔ Code quality analysis (SonarQube)
+✔ Monitoring & visualization (Prometheus, Grafana)
+✔ GitOps deployment (ArgoCD) 
 
 ---
 
-## 📂 Other DevOps Projects
+## 🧰 Tools & Technologies
 
-### 🟠 **SWIGGY App Project**:  
-[![YouTube](https://img.shields.io/badge/YouTube-FF0000?style=flat-square&logo=youtube&logoColor=white)](https://youtu.be/x55z7rk0NAU)
+Your project uses the following technologies: ([GitHub][1])
 
-### 🔵 **SonarQube Video Link**:  
-[![YouTube](https://img.shields.io/badge/YouTube-FF0000?style=flat-square&logo=sonarqube&logoColor=white)](https://youtu.be/ScdedztTaAU)
-
-### 🟡 **Nexus Video Link**:  
-[![YouTube](https://img.shields.io/badge/YouTube-FF0000?style=flat-square&logo=nexus&logoColor=white)](https://youtu.be/opJAfDOCZuI)
-
----
-
-## Connect with me on LinkedIn:  
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=flat-square&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/kastro-kiran/)
-
-## Join the WhatsApp Group for DevOps technical discussions!
-[![WhatsApp](https://img.shields.io/badge/WhatsApp-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)](https://chat.whatsapp.com/EGw6ZlwUHZc82cA0vXFnwm) 
+| Category         | Tools / Services    |               
+| ---------------- | ------------------- | 
+| Version Control  | GitHub              |               
+| CI/CD            | GitHub Actions      |               
+| Containerization | Docker              |               
+| Orchestration    | Kubernetes          |               
+| Monitoring       | Prometheus, Grafana |               
+| GitOps           | ArgoCD              |               
+| Security         | OWASP, Trivy        |               
+| Code Quality     | SonarQube           | 
 
 ---
 
-### Feedback Request:  
+## 📁 Repository Structure
 
-After deploying the app, please share your opinion on LinkedIn along with the Project link and tag me on LinkedIn. Help the video reach wider DevOps enthusiasts.
+```
+.github/workflows/   → GitHub Actions CI/CD workflows  
+Kubernetes/         → Kubernetes manifests  
+public/             → Static web assets  
+src/                → Application source code  
+Dockerfile          → Docker container config  
+package.json        → Project dependencies  
+README.md           → Project documentation  
+```
+
+## 🛠️ Prerequisites
+
+Before running locally, make sure you have:
+
+* Git
+* Node.js & npm
+* Docker
+* (Optional) Kubernetes cluster (minikube / cloud provider)
+* (Optional) SonarQube server for code analysis
 
 ---
 
-## Happy learning!  
-<img src="https://media.licdn.com/dms/image/v2/D5603AQHJB_lF1d9OSw/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1718971147172?e=1735776000&v=beta&t=HC_e0eOufPvf8XQ0P7iI9GDm9hBSIh5FwQaGsL_8ivo" alt="Kastro Profile Image" width="100" height="100" style="border-radius:50%;">
+## 🏃‍♂️ Quick Start
 
-KASTRO KIRAN V
+### 1️⃣ Clone the Repository
+
+```sh
+git clone https://github.com/vishalgitt7/zomatoClone.git
+cd zomatoClone
+```
+
+### 2️⃣ Install Dependencies
+
+```sh
+npm install
+```
+
+### 3️⃣ Build & Serve
+
+To build and start the app locally:
+
+```sh
+npm start
+```
+
+This should run your app on `http://localhost:3000` (or as configured).
+
+---
+
+## 🧪 Containerization (Docker)
+
+### Build Docker Image
+
+```sh
+docker build -t zomato-clone .
+```
+
+### Run Container
+
+```sh
+docker run -p 8080:8080 zomato-clone
+```
+
+Now open `http://localhost:8080` in your browser.
+
+---
+
+## ⚙️ Deploy to Kubernetes
+
+1. Apply deployment & service manifests:
+
+```sh
+kubectl apply -f Kubernetes/
+```
+
+2. Verify pods:
+
+```sh
+kubectl get pods
+```
+
+3. Expose service (if needed):
+
+```sh
+kubectl expose deployment zomato-clone --type=LoadBalancer --port=80
+```
+
+---
+
+## 📈 CI/CD — GitHub Actions
+
+This project uses GitHub Actions workflows to automate:
+
+✔ Dependency install
+✔ Docker build
+✔ Security scans
+✔ Deployment to Kubernetes
+
+Workflows can be found under:
+
+```
+.github/workflows/
+```
+
+Modify these workflows to suit your branch strategies and deployment environments. ([GitHub][1])
+
+---
+
+## 📊 Monitoring & Security
+
+This setup includes support for:
+
+* **Prometheus** – Metrics scraping
+* **Grafana** – Dashboard visualization
+* **Trivy / OWASP** – Container & file system vulnerability scanning
+* **SonarQube** – Static code analysis
+
+Add your credentials as GitHub Secrets to enable scanning and reporting as part of your CI pipeline.
+
+---
+
+## 🤝 Contributing
+
+Your contributions are welcome! To contribute:
+
+1. Fork this repo
+2. Create a branch (`git checkout -b feature/YourFeature`)
+3. Commit your changes
+4. Push and create a Pull Request
+
+---
+
+## ⭐ Sponsor & Support
+
+If this project helped you learn DevOps workflows, consider giving it a star ⭐! 
+
+
+
+---
+
+If you want, I can customize this further (e.g., add badges, GitHub Actions diagrams, or deploy screenshots). Just tell me!
+
+[1]: https://github.com/vishalgitt7/zomatoClone/tree/git-actions "GitHub - vishalgitt7/zomatoClone at git-actions"
